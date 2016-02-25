@@ -1,0 +1,6 @@
+name: RuskethCore
+main: rusketh.com.github.spigot.Rusketh
+version: 1.0
+author: Rusketh
+commands:
+   

@@ -10,6 +10,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import rusketh.com.github.spigot.Rusketh;
+
 public class PagedMenu implements Listener {
 	private class MenuOption {
 		public Material mat;
@@ -43,7 +45,10 @@ public class PagedMenu implements Listener {
 		slotsPerPage = size;
 		options = new ArrayList<MenuOption>();
 		navigation = new ArrayList<MenuOption>();
+		Rusketh.plugin.getServer().getPluginManager().registerEvents(this, Rusketh.plugin);
 	}
+	
+	public Player getPlayer() { return player; }
 	
 	public ItemStack AddOption(Material mat, String name, Runnable action) {
 		MenuOption option = new MenuOption(mat, name, action);
@@ -56,6 +61,7 @@ public class PagedMenu implements Listener {
 		navigation.add(option);
 		return option.item;
 	}
+	
 	
 	public int getTotalPages() {
 		return (int) Math.ceil(options.size() / slotsPerPage);
@@ -85,8 +91,10 @@ public class PagedMenu implements Listener {
 		if (page > 1) {
 			openMenu.AddOption(slotsPerPage, Material.REDSTONE, "Previous Page", new Runnable() {
 				@Override
-				public void run() {openPage(page - 1);}
+				public void run() {switchPage(page - 1);}
 			});
+		} else {
+			openMenu.AddOption(slotsPerPage, Material.BARRIER, "No Previous Page", null);
 		}
 		
 		for(int i = 0; i <= 6; i++) {
@@ -100,8 +108,10 @@ public class PagedMenu implements Listener {
 		if (page < tPages) {
 			openMenu.AddOption(slotsPerPage + 8, Material.REDSTONE, "Next Page", new Runnable() {
 				@Override
-				public void run() {openPage(page + 1);}
+				public void run() {switchPage(page + 1);}
 			});
+		} else {
+			openMenu.AddOption(slotsPerPage + 8, Material.BARRIER, "No Next Page", null);
 		}
 		
 		openMenu.open();
@@ -109,8 +119,60 @@ public class PagedMenu implements Listener {
 		return true;
 	}
 	
-	@EventHandler
+	public boolean switchPage(int page) {
+		if (openMenu == null) return false;
+		
+		int tPages = getTotalPages();
+		if (page > tPages) return false;
+		
+		openMenu.clear();
+		
+		openMenu.SetTitle(menuName + "(" + page + "/" + tPages + ")");
+		
+		int start = (page - 1) * slotsPerPage;
+		
+		for(int slot = 0; slot <= slotsPerPage - 1; slot++ ) {
+			MenuOption opt = options.get(start + slot);
+			if (opt == null) break;
+			
+			openMenu.AddOption(slot, opt.mat, opt.name, opt.action);
+		}
+		
+		if (page > 1) {
+			openMenu.AddOption(slotsPerPage, Material.REDSTONE, "Previous Page", new Runnable() {
+				@Override
+				public void run() {switchPage(page - 1);}
+			});
+		} else {
+			openMenu.AddOption(slotsPerPage, Material.BARRIER, "No Previous Page", null);
+		}
+		
+		for(int i = 0; i <= 6; i++) {
+			if (i > navigation.size() - 1) break;
+			
+			MenuOption opt = navigation.get(i);
+			
+			if (opt != null) openMenu.AddOption(slotsPerPage + 1 + i, opt.mat, opt.name, opt.action);
+		}
+			
+		if (page < tPages) {
+			openMenu.AddOption(slotsPerPage + 8, Material.REDSTONE, "Next Page", new Runnable() {
+				@Override
+				public void run() {switchPage(page + 1);}
+			});
+		} else {
+			openMenu.AddOption(slotsPerPage + 8, Material.BARRIER, "No Next Page", null);
+		}
+		
+		player.updateInventory();
+		
+		return true;
+	}
+	
+	
+	/* Hopfully this is no longer needed.
+	 * @EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
 		if (openMenu != null) openMenu.onInventoryClick(event);
-	}
+	}*/
 }

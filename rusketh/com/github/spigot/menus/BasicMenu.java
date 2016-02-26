@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,6 +12,11 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import net.minecraft.server.v1_8_R3.ChatMessage;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.PacketPlayOutOpenWindow;
+import rusketh.com.github.spigot.Rusketh;
 
 public class BasicMenu implements Listener {
 	private HashMap<Integer, Runnable> actions;
@@ -21,6 +27,8 @@ public class BasicMenu implements Listener {
 		actions = new HashMap<Integer, Runnable>();
 		inventory = Bukkit.createInventory(null, size, name);
 		player = ply;
+		
+		Rusketh.plugin.getServer().getPluginManager().registerEvents(this, Rusketh.plugin);
 	}
 	
 	public Player getPlayer() { return player; }
@@ -29,12 +37,7 @@ public class BasicMenu implements Listener {
 	public ItemStack AddOption(int slot, Material mat, String name, Runnable action) {
 		ItemStack items = new ItemStack(mat);
 		
-		ItemMeta meta = items.getItemMeta();
-    	
-		if (meta != null) {
-    		meta.setDisplayName(name);
-    		items.setItemMeta(meta);
-    	}
+		setStackName(items, name);
 		
 		inventory.setItem(slot, items);
 		
@@ -43,6 +46,26 @@ public class BasicMenu implements Listener {
 		return items;
 	}
 	
+	public boolean setStackName(ItemStack items, String name) {
+		ItemMeta meta = items.getItemMeta();
+		
+		if (meta != null) {
+			meta.setDisplayName(name);
+			items.setItemMeta(meta);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public void SetTitle(String title) {
+		//Thanks to gyurix
+		EntityPlayer entPly = ((CraftPlayer) player).getHandle();
+		PacketPlayOutOpenWindow packet = new PacketPlayOutOpenWindow(entPly.activeContainer.windowId, "minecraft:chest", new ChatMessage(title), inventory.getSize());
+		entPly.playerConnection.sendPacket(packet);
+		entPly.updateInventory(entPly.activeContainer);
+	}
+
 	public void clear() {
 		inventory.clear();
 		actions.clear();
@@ -56,19 +79,24 @@ public class BasicMenu implements Listener {
 		player.closeInventory();
 	}
 	
+	public void reopen() {
+		close();
+		open();
+	}
+	
+	public boolean onClick(InventoryClickEvent event) { return true; }
+	
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
 		if (event.getWhoClicked() != player) return;
 		if (!event.getInventory().equals(inventory)) return;
 		if (event.getRawSlot() != event.getSlot()) return;
-				
-		int slot = event.getSlot();
+		if (!onClick(event)) return;
 		
+		int slot = event.getSlot();
 		if (actions.containsKey(slot)) {
-			System.out.print(event.getInventory().getName() + " Slot: " + slot);
-			actions.get(slot).run();
-		} else {
-			System.out.print(event.getInventory().getName() + " Slot: -1");
+			Runnable act = actions.get(slot);
+			if (act != null) act.run();
 		}
 		
 		event.setCancelled(true);

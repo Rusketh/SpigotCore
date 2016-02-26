@@ -46,7 +46,7 @@ public abstract class Command
 				
 				if ( !playerCmd ) throw new CommandException(ChatColor.RED + "This command can only be used from console.");
 				
-				if ( requiredPerms.length > 0 ) {
+				if ( requiredPerms != null && requiredPerms.length > 0 ) {
 					Boolean hasPerm = player.isOp();
 				
 					for ( String perm : requiredPerms ) {
@@ -82,4 +82,7 @@ public abstract class Command
 		return sucess;
 	}
 	
+	public String getExample() {
+		return example;
+	}
 }

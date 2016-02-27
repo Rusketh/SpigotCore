@@ -25,13 +25,16 @@ import rusketh.com.github.spigot.Rusketh;
 
 public class PlayerManager implements Listener {
 	private HashMap<Player, RuskPlayer> players;
-
+	private HashMap<String,YamlConfiguration> playerData;
+	
 	static File defYMLFile;
 	static YamlConfiguration defPlyYML;
-	static String dir = "plugins/RuskethCore/players";
+	static String playerDir = "plugins/RuskethCore/players";
 	
 	public PlayerManager() {
 		players = new HashMap<Player, RuskPlayer>();
+		playerData = new HashMap<String,YamlConfiguration>();
+		
 		loadDefaultData();
 		loadAllPlayers();
 		
@@ -41,7 +44,7 @@ public class PlayerManager implements Listener {
 	public void loadDefaultData() {
 		try {
 			defPlyYML = new YamlConfiguration();
-			defYMLFile = new File(dir + "/default", "data.yml");
+			defYMLFile = new File(playerDir + "/default", "data.yml");
 			
 			File dir = new File(defYMLFile.getParent());
 			dir.mkdirs();
@@ -74,9 +77,55 @@ public class PlayerManager implements Listener {
 		}
 	}
 	
+	public void loadPlayerData(String name) {
+		try {
+			File dir = new File(playerDir, name);
+			dir.mkdirs();
+			
+			YamlConfiguration config = new YamlConfiguration();
+			
+			File file = new File(dir, name + ".yaml");
+					
+			if (!file.exists()) {
+				file.createNewFile();
+				FileInputStream inStream = new FileInputStream(defYMLFile);
+				BufferedWriter outputStream = new BufferedWriter(new FileWriter(file));
+				
+				while ( inStream.available() != 0 ) {
+					outputStream.write(inStream.read());
+				}
+				
+				inStream.close();
+				outputStream.close();
+				
+				config.load(file);
+				
+				playerData.put(name, config);
+			}
+		} catch (IOException | InvalidConfigurationException ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	public void savePlayerData(String name) {
+		try {
+			File file = new File(playerDir, name + ".yaml");
+			playerData.get(name).save(file);
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	public YamlConfiguration getPlayerData(String name) {
+		return playerData.get(name);
+	}
+	
 	public void loadAllPlayers() {
 		players.clear();
+		
+		playerData.clear();
 		for(Player ply : Rusketh.plugin.getServer().getOnlinePlayers()) {
+			loadPlayerData(ply.getName());
 			players.put(ply, new RuskPlayer(ply));
 		}
 	}
@@ -88,6 +137,7 @@ public class PlayerManager implements Listener {
 	@EventHandler
 	public void playerJoinEvent(PlayerJoinEvent event) {
 		Player ply = event.getPlayer();
+		loadPlayerData(ply.getName());
 		players.put(ply, new RuskPlayer(ply));
 	}
 	
@@ -95,7 +145,7 @@ public class PlayerManager implements Listener {
 	public void playerQuitEvent(PlayerQuitEvent event) {
 		Player ply = event.getPlayer();
 		RuskPlayer rPly = players.get(ply);
-		rPly.SavePlayerYML();
+		savePlayerData(ply.getName());
 		players.remove(ply);
 		rPly = null;
 	}

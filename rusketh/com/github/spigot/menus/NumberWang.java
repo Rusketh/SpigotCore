@@ -14,8 +14,8 @@ public class NumberWang implements Listener {
 	private BasicMenu openMenu;
 	private Runnable action;
 	
-	private int min;
-	private int max;
+	private int min = 0;
+	private int max = 1000000;
 	private int value = 0;
 	
 	public NumberWang(Player ply, String name) {
@@ -24,13 +24,14 @@ public class NumberWang implements Listener {
 		createNumberWang();
 		Rusketh.plugin.getServer().getPluginManager().registerEvents(this, Rusketh.plugin);
 	}
+	
 	public Player getPlayer() { return player; }
 	
 	public int getValue() { return value; }
 	public void setValue(int val) { value = val; }
 	public void updateValue(int val) {
 		value = val;
-		if (openMenu != null) openMenu.SetTitle(menuName + " : " + value);
+		if (openMenu != null) openMenu.SetTitle(menuName.replace("%v%", "" + value));
 	}
 	
 	public int getMin() { return min; }
@@ -60,9 +61,9 @@ public class NumberWang implements Listener {
 			@Override
 			public void run() {
 				if (onChange(value, modifier)) {
-					value += modifier;
+					value = value + modifier;
 					if (value < min) value = min; else if (value > max) value = max;
-					if (openMenu != null) openMenu.SetTitle(menuName.replace("%V%", "" + value));
+					if (openMenu != null) openMenu.SetTitle(menuName.replace("%v%", "" + value));
 					postChange(value, modifier);
 				};
 			}
@@ -75,7 +76,12 @@ public class NumberWang implements Listener {
 	}
 	
 	private void createNumberWang() {
-		openMenu = new BasicMenu(player, 9, menuName + " : " + value);
+		NumberWang numberWang = this;
+		
+		openMenu = new BasicMenu(player, 9, menuName.replace("%v%", "" + value)) {
+			@Override
+			public void onClose() { numberWang.onClose(); }
+		};
 		
 		openMenu.AddOption(0, Material.DIAMOND_BLOCK, "-100", createAction(-100));
 		openMenu.AddOption(1, Material.GOLD_BLOCK, "-50", createAction(-50));
@@ -88,10 +94,9 @@ public class NumberWang implements Listener {
 		openMenu.AddOption(6, Material.IRON_BLOCK, "+10", createAction(10));
 		openMenu.AddOption(7, Material.GOLD_BLOCK, "+50", createAction(50));
 		openMenu.AddOption(8, Material.DIAMOND_BLOCK, "+100", createAction(100));
+		
+		openMenu.setLocked(true);
 	}
 	
-	@EventHandler
-	public void onInventoryClick(InventoryClickEvent event) {
-		if (openMenu != null) openMenu.onInventoryClick(event);
-	}
+	public void onClose() {}
 }

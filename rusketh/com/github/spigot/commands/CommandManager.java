@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import net.md_5.bungee.api.ChatColor;
+import rusketh.com.github.spigot.Rusketh;
 
 public class CommandManager implements Listener {
 	private HashMap<String, Command> commands;
@@ -15,6 +16,7 @@ public class CommandManager implements Listener {
 	public CommandManager() {
 		commands = new HashMap<String, Command>();
 		addDefaultcommands();
+		Rusketh.plugin.getServer().getPluginManager().registerEvents(this, Rusketh.plugin);
 	}
 	
 	public Command addCommand(String name, Command cmd) {

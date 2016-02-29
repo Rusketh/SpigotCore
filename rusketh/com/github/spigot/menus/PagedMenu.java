@@ -175,36 +175,36 @@ public class PagedMenu implements Listener {
 			}
 			
 			@Override
-			public void onTakeItem(int slot, ItemStack item) {
-				pagedMenu.onTakeItem(toOptionSlot(slot), item);
+			public void onTakeItem(int slot, ItemStack item, InventoryClickEvent event) {
+				pagedMenu.onTakeItem(toOptionSlot(slot), item, event);
 			}
 			
 			@Override
-			public boolean canTakeItem(int slot, ItemStack item) {
+			public boolean canTakeItem(int slot, ItemStack item, InventoryClickEvent event) {
 				if (isSlotLocked(slot)) return false;
-				return pagedMenu.canTakeItem(toOptionSlot(slot), item);
+				return pagedMenu.canTakeItem(toOptionSlot(slot), item, event);
 			}
 			
 			@Override
-			public void onInsertItem(int slot, ItemStack item) {
-				pagedMenu.onInsertItem(toOptionSlot(slot), item);
+			public void onInsertItem(int slot, ItemStack item, InventoryClickEvent event) {
+				pagedMenu.onInsertItem(toOptionSlot(slot), item, event);
 			}
 			
 			@Override
-			public boolean canInsertItem(int slot, ItemStack item) {
+			public boolean canInsertItem(int slot, ItemStack item, InventoryClickEvent event) {
 				if (isSlotLocked(slot)) return false;
-				return pagedMenu.canInsertItem(toOptionSlot(slot), item);
+				return pagedMenu.canInsertItem(toOptionSlot(slot), item, event);
 			}
 			
 			@Override
-			public void onDropItem(int slot, ItemStack item) {
-				pagedMenu.onDropItem(toOptionSlot(slot), item);
+			public void onDropItem(int slot, ItemStack item, InventoryClickEvent event) {
+				pagedMenu.onDropItem(toOptionSlot(slot), item, event);
 			}
 			
 			@Override
-			public boolean canDropItem(int slot, ItemStack item) {
+			public boolean canDropItem(int slot, ItemStack item, InventoryClickEvent event) {
 				if (isSlotLocked(slot)) return false;
-				return pagedMenu.canDropItem(toOptionSlot(slot), item);
+				return pagedMenu.canDropItem(toOptionSlot(slot), item, event);
 			}
 		};
 		
@@ -317,18 +317,18 @@ public class PagedMenu implements Listener {
 		return canceled;
 	}
 	
-	public void onTakeItem(int slot, ItemStack item) { }
-	public boolean canTakeItem(int slot, ItemStack item) {
+	public void onTakeItem(int slot, ItemStack item, InventoryClickEvent event) { }
+	public boolean canTakeItem(int slot, ItemStack item, InventoryClickEvent event) {
 		return true;
 	}
 	
-	public void onInsertItem(int slot, ItemStack item) { }
-	public boolean canInsertItem(int slot, ItemStack item) {
+	public void onInsertItem(int slot, ItemStack item, InventoryClickEvent event) { }
+	public boolean canInsertItem(int slot, ItemStack item, InventoryClickEvent event) {
 		return true;
 	}
 	
-	public void onDropItem(int slot, ItemStack item) { }
-	public boolean canDropItem(int slot, ItemStack item) {
+	public void onDropItem(int slot, ItemStack item, InventoryClickEvent event) { }
+	public boolean canDropItem(int slot, ItemStack item, InventoryClickEvent event) {
 		return true;
 	}
 }

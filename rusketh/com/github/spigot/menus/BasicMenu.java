@@ -156,20 +156,20 @@ public class BasicMenu implements Listener {
 		return canceled;
 	}
 	
-	public void onTakeItem(int slot, ItemStack item) { }
-	public boolean canTakeItem(int slot, ItemStack item) {
+	public void onTakeItem(int slot, ItemStack item, InventoryClickEvent event) { }
+	public boolean canTakeItem(int slot, ItemStack item, InventoryClickEvent event) {
 		if (isSlotLocked(slot)) return false;
 		return true;
 	}
 	
-	public void onInsertItem(int slot, ItemStack item) { }
-	public boolean canInsertItem(int slot, ItemStack item) {
+	public void onInsertItem(int slot, ItemStack item, InventoryClickEvent event) { }
+	public boolean canInsertItem(int slot, ItemStack item, InventoryClickEvent event) {
 		if (isSlotLocked(slot)) return false;
 		return true;
 	}
 	
-	public void onDropItem(int slot, ItemStack item) { }
-	public boolean canDropItem(int slot, ItemStack item) {
+	public void onDropItem(int slot, ItemStack item, InventoryClickEvent event) { }
+	public boolean canDropItem(int slot, ItemStack item, InventoryClickEvent event) {
 		if (isSlotLocked(slot)) return false;
 		return true;
 	}
@@ -194,16 +194,16 @@ public class BasicMenu implements Listener {
 		if (item == null || item.getType() == Material.AIR) return;
 		
 		if (act == InventoryAction.PICKUP_ONE || act == InventoryAction.PICKUP_SOME || act == InventoryAction.PICKUP_HALF || act == InventoryAction.PICKUP_ALL || act == InventoryAction.COLLECT_TO_CURSOR) {
-			if (canTakeItem(slot, item)) { onTakeItem(slot, item); } else { canceled = true; }
+			if (canTakeItem(slot, item, event)) { onTakeItem(slot, item, event); } else { canceled = true; }
 		} else if (act == InventoryAction.PLACE_ONE || act == InventoryAction.PLACE_SOME || act == InventoryAction.PLACE_ALL) {
-			if (canInsertItem(slot, item)) { onInsertItem(slot, item); } else { canceled = true; }
+			if (canInsertItem(slot, item, event)) { onInsertItem(slot, item, event); } else { canceled = true; }
 		} else if (act == InventoryAction.DROP_ALL_SLOT || act == InventoryAction.DROP_ONE_SLOT ) {
-			if (canDropItem(slot, item)) { onDropItem(slot, item); } else { canceled = true; }
+			if (canDropItem(slot, item, event)) { onDropItem(slot, item, event); } else { canceled = true; }
 		} else if (act == InventoryAction.SWAP_WITH_CURSOR ) {
 			ItemStack held = player.getItemOnCursor();
-			if (canTakeItem(slot, item) && canInsertItem(slot, held)) {
-				onTakeItem(slot, item);
-				onInsertItem(slot, held);
+			if (canTakeItem(slot, item, event) && canInsertItem(slot, held, event)) {
+				onTakeItem(slot, item, event);
+				onInsertItem(slot, held, event);
 			} else { canceled = true; }
 		} else { canceled = true; }
 		

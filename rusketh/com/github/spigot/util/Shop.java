@@ -1,79 +1,143 @@
 package rusketh.com.github.spigot.util;
 
-import java.util.HashMap;
+import java.util.List;
 
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.inventory.Inventory;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import rusketh.com.github.spigot.Rusketh;
+import rusketh.com.github.spigot.menus.PagedMenu;
 
-public class Shop implements Listener {
-	private int size;
-	private String name;
-	private String owner;
-	private HashMap<Integer, ItemStack> items;
-	private HashMap<Integer, Double> prices;
-	
-	public Shop(int size, String name, String owner) {
-		this.size = size;
-		this.name = name;
-		this.owner = owner;
-		this.prices = new HashMap<Integer, Double>();
-		this.items = new HashMap<Integer, ItemStack>();
-		Rusketh.plugin.getServer().getPluginManager().registerEvents(this, Rusketh.plugin);
+public class Shop extends YAMLInventory {
+
+	public Shop(FileConfiguration YAML, String node) {
+		super(YAML, node);
 	}
 	
-	public double getPrice(int slot) { return prices.get(slot); }
+	/***************************************************************************
 	
-	public void setPrice(int slot, double price) { prices.put(slot, price); }
+		getString("Owner");
+		setString("Owner", owner);
+		getString("Name");
+		setString("Name", name);
+		getItemDoubble(slot, "Price");
+		setItemDoubble(slot, "Price", value);
 	
-	public HashMap<Integer, ItemStack> getItems() { return items; }
+	 ***************************************************************************/
 	
-	public Shop(YamlConfiguration config, String node) {
-		loadFromYML(config, node);
-		Rusketh.plugin.getServer().getPluginManager().registerEvents(this, Rusketh.plugin);
+	/***************************************************************************/
+	
+	public String getName() {
+		return getString("Name");
 	}
 	
-	public void loadFromYML(YamlConfiguration config, String node) {
-		size = config.getInt(node + ".Size");
-		name = config.getString(node + ".Name");
-		owner = config.getString(node + ".Owner");
-		this.prices = new HashMap<Integer, Double>();
-		this.items = new HashMap<Integer, ItemStack>();
+	public void setName(String name) {
+		setString("Name", name);
+	}
+	
+	public String getOwner() {
+		return getString("Owner");
+	}
+	
+	public void setOwner(String name) {
+		setString("Owner", name);
+	}
+	
+	/***************************************************************************/
+	
+	
+	private class ShopMenu extends PagedMenu {
+		private Shop shopYAML;
 		
-		for (int i = 0; i < size * 9; i++) {
-			String slotNode = node + ".Slots." + i;
-			if (!config.contains(slotNode)) continue;
-			prices.put(i, config.getDouble(slotNode + ".Price"));
-			items.put(i, config.getItemStack(slotNode + ".Item"));
+		public ShopMenu(Player ply, int size, String name) {
+			super(ply, size, name);
+		}
+		
+		public ShopMenu(Player ply, Shop shop) {
+			super(ply, shop.getSize(), shop.getString("Name"));
+			shopYAML = shop;
+			loadInventory();
+		}
+		
+		public void loadShop(Shop shop) {
+			shopYAML = shop;
+			loadInventory();
+		}
+		
+		private void loadInventory() {
+			clear(false);
+			for (int i = 0; i < getSize(); i++) {
+				if (shopYAML.isEmpty(i))
+					AddOption(Material.AIR, "", null);
+				else
+					importSlot(i);
+			}
+		}
+		
+		private void importSlot(int slot) {
+			if (shopYAML.isEmpty(slot)) return;
+			ItemStack item = shopYAML.getItem(slot);
+			System.out.println("Importing slot: " + slot + " - " + item);
+			
+			if (item == null) return;
+			
+			double price = shopYAML.getItemDoubble(slot, "Price");
+			List<String> lore = getLore(item);
+			
+			if (lore != null) {
+				lore.add("Price: " + price);
+				lore.add("Avalible: " + item.getAmount());
+				setLore(item, lore);
+			}
+			
+			AddOption(item, item.toString(), null);
+		}
+		
+		public List<String> getLore(ItemStack item) {
+			ItemMeta meta = item.getItemMeta();
+			if (meta != null) {
+				return meta.getLore();
+			}; return null;
+		}
+		
+		public void setLore(ItemStack item, List<String> lore) {
+			ItemMeta meta = item.getItemMeta();
+			if (meta != null) {
+				meta.setLore(lore);
+				item.setItemMeta(meta);
+			}
+		}
+		
+		@Override
+		public void onInsertItem(int slot, ItemStack item, InventoryClickEvent event) {
+			if (isSlotLocked(slot)) return;// false;
+			
+			int amount = shopYAML.insert(item);
+			item.setAmount(amount);
+			
+			//if (amount == 0) event.setCurrentItem(new ItemStack(Material.AIR, 0));
+			//else event.setCurrentItem(item);
+			
+			loadInventory();
+			switchPage(getPage());
 		}
 	}
 	
-	public void saveToYML(YamlConfiguration config, String node) {
-		config.set(node + ".Size", size);
-		config.set(node + ".Name", name);
-		config.set(node + ".Owner", owner);
+	public ShopMenu Open(Player ply) {
+		ShopMenu menu = new ShopMenu(ply, this) {
+			@Override
+			public void onClose() {
+				Rusketh.plugin.saveConfig();
+			}
+		};
 		
-		for (int i = 0; i < size * 9; i++) {
-			String slotNode = node + ".Slots." + i;
-			if (!items.containsKey(i)) continue;
-			config.getDouble(slotNode + ".Price", prices.get(i));
-			config.set(slotNode + ".Item", items.get(i));
-		}
-	}
-	
-	public ShopOwnerMenu openOwnerMenu(Player ply) {
-		int rows = size;
-		if (rows > 3) rows = 3;
-
-		ShopOwnerMenu menu = new ShopOwnerMenu(ply, rows * 9, name);
-		//menu.setShop(this);
 		menu.openPage(1);
 		
 		return menu;
 	}
 }
+
